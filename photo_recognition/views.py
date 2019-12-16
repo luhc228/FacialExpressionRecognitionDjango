@@ -20,23 +20,22 @@ def image_upload(request):
             for c in image.chunks():
                 pic.write(c)
 
-        result_file_path = 'r_' + image_name
+        result_image_name = 'r_' + image_name
 
         response = {
             'success': True,
-            'message': '上传图片成功',
+            'message': 'Upload successfully',
             'data': {
-                'resultfilePath': result_file_path
+                'resultImageName': result_image_name
             }
         }
     else:
         response = {
             'success': False,
-            'message': '上传失败',
+            'message': 'Upload fail',
         }
 
-    return HttpResponse(content=json.dumps(response, ensure_ascii=False),
-                        content_type='application/json;charset = utf-8')
+    return HttpResponse(content=json.dumps(response, ensure_ascii=False))
 
 
 def query_result(request):
@@ -45,10 +44,10 @@ def query_result(request):
     """
     if request.method == "GET":
         try:
-            result_name = request.GET.get('filename')
-            image_path = '%s/%s' % (settings.RESULT_DIR, result_name)
-            image_data = open(image_path, "rb").read()
-            print(image_data)
+            result_name = request.GET.get('imagename')
+            image_path = '%s/%s/%s' % (settings.RESULT_ROOT, settings.RESULT_URL, result_name)
+            open(image_path, "rb").read()
+
         except Exception as e:
             response = {
                 'success': False,
@@ -56,9 +55,14 @@ def query_result(request):
             }
 
         else:
+            image_path = '%s%s%s' % (settings.STATIC_URL, settings.RESULT_URL, result_name)
+            image_path = image_path.replace('//', '/')
             response = {
                 'success': True,
-                'message': '结果图获取成功',
+                'message': 'upload success',
+                'data': {
+                    'imageUrl': image_path
+                }
             }
 
         return HttpResponse(content=json.dumps(response, ensure_ascii=False),
