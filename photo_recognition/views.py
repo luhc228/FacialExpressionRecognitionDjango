@@ -1,8 +1,14 @@
+import sys
+import threading
+
 from django.http import HttpResponse
 import json
 import uuid
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
+
+sys.path.append('/home/rTeam/Desktop/Xu')
+from visualize import detector
 
 
 @csrf_exempt
@@ -12,30 +18,39 @@ def image_upload(request):
         @param image
     """
     if request.method == "POST":
-        image = request.FILES['image']
-        suffix = image.name.split('.')[-1]
-        image_name = str(uuid.uuid1()) + '.' + suffix
-        image_path = '%s/%s' % (settings.UPLOAD_DIR, image_name)
-        with open(image_path, 'wb') as pic:
-            for c in image.chunks():
-                pic.write(c)
+        try:
 
-        result_image_name = 'r_' + image_name
+            image = request.FILES['image']
+            suffix = image.name.split('.')[-1]
+            image_name = str(uuid.uuid1()) + '.' + suffix
+            image_path = '%s/%s' % (settings.UPLOAD_DIR, image_name)
+            with open(image_path, 'wb') as pic:
+                for c in image.chunks():
+                    pic.write(c)
 
-        response = {
-            'success': True,
-            'message': 'Upload successfully',
-            'data': {
-                'resultImageName': result_image_name
+            result_image_name = 'r_' + image_name
+            output_path = '%s/%s' % (settings.RESULT_DIR, result_image_name)
+
+            # visualize the result
+            # detector(image_path, output_path)
+            t1 = threading.Thread(target=detector, args=(image_path, output_path))
+            t1.start()
+
+        except Exception as e:
+            response = {
+                'success': False,
+                'message': 'Upload fail',
             }
-        }
-    else:
-        response = {
-            'success': False,
-            'message': 'Upload fail',
-        }
+        else:
+            response = {
+                'success': True,
+                'message': 'Upload successfully',
+                'data': {
+                    'resultImageName': result_image_name
+                }
+            }
 
-    return HttpResponse(content=json.dumps(response, ensure_ascii=False))
+        return HttpResponse(content=json.dumps(response, ensure_ascii=False))
 
 
 def query_result(request):
