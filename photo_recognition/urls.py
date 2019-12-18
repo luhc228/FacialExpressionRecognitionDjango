@@ -4,5 +4,7 @@ from photo_recognition import views
 
 urlpatterns = [
     url('image/upload', views.image_upload),
-    url('result/get', views.query_result)
+    url('result/get', views.query_result),
+    url('run/detector', views.run_detector),
+
 ]

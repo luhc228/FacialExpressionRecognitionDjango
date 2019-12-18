@@ -7,8 +7,7 @@ import uuid
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 
-sys.path.append('/home/rTeam/Desktop/Xu')
-from visualize import detector
+from visualize import detect as detector
 
 
 @csrf_exempt
@@ -17,9 +16,11 @@ def image_upload(request):
         上传图片接口
         @param image
     """
+
+    global image_path
+    global output_path
     if request.method == "POST":
         try:
-
             image = request.FILES['image']
             suffix = image.name.split('.')[-1]
             image_name = str(uuid.uuid1()) + '.' + suffix
@@ -31,11 +32,6 @@ def image_upload(request):
             result_image_name = 'r_' + image_name
             output_path = '%s/%s' % (settings.RESULT_DIR, result_image_name)
 
-            # visualize the result
-            # detector(image_path, output_path)
-            t1 = threading.Thread(target=detector, args=(image_path, output_path))
-            t1.start()
-
         except Exception as e:
             response = {
                 'success': False,
@@ -46,8 +42,33 @@ def image_upload(request):
                 'success': True,
                 'message': 'Upload successfully',
                 'data': {
-                    'resultImageName': result_image_name
+                    'resultImageName': result_image_name,
+                    'imagePath': image_path,
+                    'outputPath': output_path,
                 }
+            }
+
+        return HttpResponse(content=json.dumps(response, ensure_ascii=False))
+
+
+@csrf_exempt
+def run_detector(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            image_path = data['imagePath']
+            output_path = data['outputPath']
+            detector(image_path, output_path)
+        except Exception as e:
+            print(e)
+            response = {
+                'success': False,
+                'message': 'Run detector fail',
+            }
+        else:
+            response = {
+                'success': True,
+                'message': 'Run detector successfully',
             }
 
         return HttpResponse(content=json.dumps(response, ensure_ascii=False))
